@@ -74,4 +74,11 @@ public class SolicitudController {
             // Confirmar exito
             return ResponseEntity.noContent().build();
         }
+        
+    // Consultar solicitudes desde el perfil ADMIN
+    @GetMapping("/admin")
+    public List<Solicitud> listarParaAdministrador() {
+        return service.listarSolicitudes();
+    }
+
 }
