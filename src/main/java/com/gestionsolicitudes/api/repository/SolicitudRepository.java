@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface SolicitudRepository extends MongoRepository<Solicitud, String> {
     List<Solicitud> findByTecnicoCorreo(String tecnicoCorreo);
+    List<Solicitud> findByClienteCorreo(String clienteCorreo);
 }

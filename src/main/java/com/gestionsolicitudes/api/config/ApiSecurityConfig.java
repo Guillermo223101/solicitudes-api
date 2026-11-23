@@ -68,6 +68,12 @@ public class ApiSecurityConfig {
                         "/api/solicitudes/admin"
                     ).hasRole("ADMIN")
 
+                    // Todas las operaciones /mis requieren CLIENTE
+                    .requestMatchers(
+                        "/api/solicitudes/mis",
+                        "/api/solicitudes/mis/**"
+                    ).hasRole("CLIENTE")
+
                     // TEMPORAL: Conservar el CRUD existente
                     .requestMatchers(
                         "/api/solicitudes",
