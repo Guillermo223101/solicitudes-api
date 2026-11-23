@@ -68,7 +68,6 @@ class SolicitudServiceTest {
         verify(repository, times(1)).findAll();
     }
 
-
     @Test
     void debeBuscarSolicitudPorId() {
         //1- Simular el repositorio
@@ -93,7 +92,6 @@ class SolicitudServiceTest {
         verify(repository).findById("mongo-001");
     }
 
-
     @Test
     void debeDevolverVacioSiNoExisteSolicitud() {
         //1- Simular el repositorio
@@ -110,8 +108,6 @@ class SolicitudServiceTest {
         assertTrue(resultado.isEmpty());
         verify(repository).findById("no-existe");
     }
-
-
 
     @Test
     void debeActualizarSolicitudCorrectamente() {
@@ -152,7 +148,6 @@ class SolicitudServiceTest {
         verify(repository).save(existente);
     }
 
-
     @Test
     void noDebeActualizarSolicitudInexistente() {
 
@@ -174,7 +169,6 @@ class SolicitudServiceTest {
         verify(repository, never()).save(any(Solicitud.class));
     }
 
-
     @Test
     void debeEliminarSolicitudCorrectamente() {
 
@@ -194,7 +188,6 @@ class SolicitudServiceTest {
         verify(repository, times(1)).deleteById("mongo-001");
     }
 
-
     @Test
     void noDebeEliminarSolicitudInexistente() {
 
@@ -212,6 +205,119 @@ class SolicitudServiceTest {
 
         // Verificar que no se elimine nada
         verify(repository, never()).deleteById(anyString());
+    }
+
+    @Test
+    void debeAsignarTecnicoCorrectamente() {
+
+        // Simular el repositorio
+        SolicitudRepository repository =
+            mock(SolicitudRepository.class);
+
+        SolicitudService service =
+            new SolicitudService(repository);
+
+        // Preparar una solicitud existente
+        Solicitud solicitud = new Solicitud();
+        solicitud.setId("mongo-001");
+        solicitud.setTitulo("Computador no enciende");
+        solicitud.setEstado("Recibida");
+
+        // Simular MongoDB
+        when(repository.findById("mongo-001"))
+            .thenReturn(Optional.of(solicitud));
+
+        when(repository.save(solicitud))
+            .thenReturn(solicitud);
+
+        // Asignar tecnico
+        Optional<Solicitud> resultado =
+            service.asignarTecnico(
+                "mongo-001",
+                "tecnico1@ejemplo.cl"
+            );
+
+        // Comprobar resultados
+        assertTrue(resultado.isPresent());
+
+        assertEquals(
+            "tecnico1@ejemplo.cl",
+            resultado.get().getTecnicoCorreo()
+        );
+
+        assertEquals(
+            "mongo-001",
+            resultado.get().getId()
+        );
+
+        assertEquals(
+            "Recibida",
+            resultado.get().getEstado()
+        );
+
+        // Verificar guardado
+        verify(repository, times(1))
+            .save(solicitud);
+    }
+
+    @Test
+    void noDebeAsignarTecnicoASolicitudInexistente() {
+
+        SolicitudRepository repository =
+            mock(SolicitudRepository.class);
+
+        SolicitudService service =
+            new SolicitudService(repository);
+
+        when(repository.findById("no-existe"))
+            .thenReturn(Optional.empty());
+
+        Optional<Solicitud> resultado =
+            service.asignarTecnico(
+                "no-existe",
+                "tecnico1@ejemplo.cl"
+            );
+
+        assertTrue(resultado.isEmpty());
+
+        verify(repository, never())
+            .save(any(Solicitud.class));
+    }
+
+    @Test
+    void debeListarSolicitudesDeUnTecnico() {
+
+        // Simular repositorio
+        SolicitudRepository repository =
+            mock(SolicitudRepository.class);
+
+        SolicitudService service =
+            new SolicitudService(repository);
+
+        // Preparar solicitud asignada
+        Solicitud solicitud = new Solicitud();
+        solicitud.setId("mongo-001");
+        solicitud.setTitulo("Reparar computador");
+        solicitud.setTecnicoCorreo("tecnico1@123");
+
+        // Simular respuesta de MongoDB
+        when(repository.findByTecnicoCorreo("tecnico1@123"))
+            .thenReturn(List.of(solicitud));
+
+        // Ejecutar consulta
+        List<Solicitud> resultado =
+            service.listarAsignadasATecnico("tecnico1@123");
+
+        // Verificar resultados
+        assertEquals(1, resultado.size());
+
+        assertEquals(
+            "Reparar computador",
+            resultado.get(0).getTitulo()
+        );
+
+        verify(repository, times(1))
+            .findByTecnicoCorreo("tecnico1@123");
     }
 
 }

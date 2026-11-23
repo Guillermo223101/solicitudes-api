@@ -59,4 +59,52 @@ public class SolicitudService {
         repository.deleteById(id);
         return true;
     }
+
+
+    // Asignar un tecnico a una solicitud
+    public Optional<Solicitud> asignarTecnico(
+            String id, String tecnicoCorreo) {
+
+        // Validar correo del tecnico
+        if (tecnicoCorreo == null || tecnicoCorreo.isBlank()) {
+            throw new IllegalArgumentException(
+                "El correo del tecnico es obligatorio"
+            );
+        }
+
+        // Buscar la solicitud en MongoDB
+        return repository.findById(id)
+            .map(solicitud -> {
+
+                // Asignar tecnico responsable
+                solicitud.setTecnicoCorreo(
+                    tecnicoCorreo.trim()
+                );
+
+                // Guardar cambios en MongoDB
+                return repository.save(solicitud);
+            });
+    }
+
+
+    // Obtener solicitudes asignadas a un tecnico
+    public List<Solicitud> listarAsignadasATecnico(
+            String tecnicoCorreo) {
+
+        // Validar identificador del tecnico
+        if (tecnicoCorreo == null ||
+                tecnicoCorreo.isBlank()) {
+
+            throw new IllegalArgumentException(
+                "El correo del tecnico es obligatorio"
+            );
+        }
+
+        // Consultar solicitudes asignadas
+        return repository.findByTecnicoCorreo(
+            tecnicoCorreo.trim()
+        );
+    }
+
+
 }

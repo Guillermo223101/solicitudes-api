@@ -14,6 +14,8 @@ public class Solicitud {
     private String descripcion;
     private String estado;
     private String prioridad;
+    private String clienteCorreo;
+    private String tecnicoCorreo;
 
     public Solicitud() {
     }
@@ -57,4 +59,21 @@ public class Solicitud {
     public void setPrioridad(String prioridad){
         this.prioridad = prioridad;
     }
+
+    public String getClienteCorreo() {
+        return clienteCorreo;
+    }
+
+    public void setClienteCorreo(String clienteCorreo) {
+        this.clienteCorreo = clienteCorreo;
+    }
+
+    public String getTecnicoCorreo() {
+        return tecnicoCorreo;
+    }
+
+    public void setTecnicoCorreo(String tecnicoCorreo) {
+        this.tecnicoCorreo = tecnicoCorreo;
+    }
+
 }
