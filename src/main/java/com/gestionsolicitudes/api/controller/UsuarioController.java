@@ -16,13 +16,17 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+import com.gestionsolicitudes.api.dto.LoginUsuarioResponse;
+import com.gestionsolicitudes.api.service.JwtService;
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
     private final UsuarioService usuarioService;
+    private final JwtService jwtService;
     //Consturctor
-    public UsuarioController(UsuarioService usuarioService) {
+    public UsuarioController(UsuarioService usuarioService, JwtService jwtService) {
         this.usuarioService = usuarioService;
+        this.jwtService = jwtService;
     }
 
     // Registrar nuevo cliente
@@ -106,7 +110,17 @@ public class UsuarioController {
                 usuario.getRol()
             );
 
-        return ResponseEntity.ok(respuesta);
+        String token = jwtService.generarToken(usuario);
+
+        LoginUsuarioResponse respuestaLogin =
+            new LoginUsuarioResponse(
+                token,
+                "Bearer",
+                JwtService.EXPIRA_EN_SEGUNDOS,
+                respuesta
+            );
+        
+        return ResponseEntity.ok(respuestaLogin);
     }
 
 
