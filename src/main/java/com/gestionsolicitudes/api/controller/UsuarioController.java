@@ -6,6 +6,8 @@ import com.gestionsolicitudes.api.model.Usuario;
 import com.gestionsolicitudes.api.service.CorreoDuplicadoException;
 import com.gestionsolicitudes.api.service.UsuarioService;
 import com.gestionsolicitudes.api.dto.LoginUsuarioRequest;
+import com.gestionsolicitudes.api.dto.LoginUsuarioResponse;
+import com.gestionsolicitudes.api.service.JwtService;
 
 import jakarta.validation.Valid;
 
@@ -13,11 +15,11 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Map;
 
-import com.gestionsolicitudes.api.dto.LoginUsuarioResponse;
-import com.gestionsolicitudes.api.service.JwtService;
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
@@ -123,5 +125,19 @@ public class UsuarioController {
         return ResponseEntity.ok(respuestaLogin);
     }
 
+    // Consultar identidad del usuario autenticado
+    @GetMapping("/me")
+    public Map<String, Object> miSesion(Authentication authentication) {
+
+        return Map.of(
+            "usuarioId", authentication.getName(),
+
+            "autoridades",
+            authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList()
+        );
+    }
 
 }
