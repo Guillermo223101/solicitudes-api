@@ -320,4 +320,82 @@ class SolicitudServiceTest {
             .findByTecnicoCorreo("tecnico1@123");
     }
 
+    @Test
+    void debeActualizarPrioridadCorrectamente() {
+
+        SolicitudRepository repositorio =
+            mock(SolicitudRepository.class);
+
+        SolicitudService servicio =
+            new SolicitudService(repositorio);
+
+        Solicitud solicitud = new Solicitud();
+        solicitud.setId("sol-001");
+        solicitud.setPrioridad("MEDIA");
+        solicitud.setClienteCorreo("cliente.api@example.com");
+
+        when(repositorio.findById("sol-001"))
+            .thenReturn(Optional.of(solicitud));
+
+        when(repositorio.save(solicitud))
+            .thenReturn(solicitud);
+
+        var resultado = servicio.actualizarPrioridad(
+            "sol-001",
+            "alta"
+        );
+
+        assertTrue(resultado.isPresent());
+        assertEquals("ALTA", resultado.get().getPrioridad());
+
+        assertEquals(
+            "cliente.api@example.com",
+            resultado.get().getClienteCorreo()
+        );
+
+        verify(repositorio).save(solicitud);
+    }
+
+    @Test
+    void debeRechazarPrioridadInvalida() {
+
+        SolicitudRepository repositorio =
+            mock(SolicitudRepository.class);
+
+        SolicitudService servicio =
+            new SolicitudService(repositorio);
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> servicio.actualizarPrioridad(
+                "sol-001",
+                "URGENTE"
+            )
+        );
+
+        verifyNoInteractions(repositorio);
+    }
+
+    @Test
+    void noDebeCambiarPrioridadSiNoExisteSolicitud() {
+
+        SolicitudRepository repositorio =
+            mock(SolicitudRepository.class);
+
+        SolicitudService servicio =
+            new SolicitudService(repositorio);
+
+        when(repositorio.findById("no-existe"))
+            .thenReturn(Optional.empty());
+
+        var resultado = servicio.actualizarPrioridad(
+            "no-existe",
+            "ALTA"
+        );
+
+        assertTrue(resultado.isEmpty());
+
+        verify(repositorio, never())
+            .save(any(Solicitud.class));
+    }
 }

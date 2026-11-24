@@ -7,7 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.http.HttpMethod;
+import jakarta.servlet.DispatcherType;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
@@ -50,6 +50,8 @@ public class ApiSecurityConfig {
 
                 //Reglas iniciales
                 .authorizeHttpRequests(auth -> auth
+                    // Permitir que Spring muestre los errores HTTP originales
+                    .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                     
                     // Registro y login publicos
                     .requestMatchers(
@@ -64,8 +66,8 @@ public class ApiSecurityConfig {
 
                     // Exclusivo para ADMIN
                     .requestMatchers(
-                        HttpMethod.GET,
-                        "/api/solicitudes/admin"
+                        "/api/solicitudes/admin",
+                        "/api/solicitudes/admin/**"
                     ).hasRole("ADMIN")
 
                     // Todas las operaciones /mis requieren CLIENTE

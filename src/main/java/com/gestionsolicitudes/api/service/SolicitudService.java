@@ -228,4 +228,41 @@ public class SolicitudService {
         return true;
     }
 
+    // Modificar prioridad de una solicitud
+    public Optional<Solicitud> actualizarPrioridad(
+            String identificadorSolicitud,
+            String prioridadNueva) {
+
+        if (identificadorSolicitud == null ||
+                identificadorSolicitud.isBlank() ||
+                prioridadNueva == null ||
+                prioridadNueva.isBlank()) {
+
+            throw new IllegalArgumentException(
+                "El ID y la prioridad son obligatorios"
+            );
+        }
+
+        String prioridadNormalizada = prioridadNueva
+            .trim()
+            .toUpperCase(Locale.ROOT);
+
+        // Validar las prioridades admitidas
+        if (!List.of("BAJA", "MEDIA", "ALTA")
+                .contains(prioridadNormalizada)) {
+
+            throw new IllegalArgumentException(
+                "La prioridad debe ser BAJA, MEDIA o ALTA"
+            );
+        }
+
+        return repository.findById(identificadorSolicitud)
+            .map(solicitud -> {
+
+                solicitud.setPrioridad(prioridadNormalizada);
+
+                return repository.save(solicitud);
+            });
+    }
+
 }
