@@ -398,4 +398,106 @@ class SolicitudServiceTest {
         verify(repositorio, never())
             .save(any(Solicitud.class));
     }
+
+    @Test
+    void debeActualizarEstadoDeSolicitudAsignada() {
+
+        SolicitudRepository repositorio =
+            mock(SolicitudRepository.class);
+
+        SolicitudService servicio = new SolicitudService(repositorio);
+
+        Solicitud solicitud = new Solicitud();
+        solicitud.setId("sol-001");
+        solicitud.setTecnicoCorreo("tecnico.prueba@example.com");
+        solicitud.setEstado("PENDIENTE");
+        solicitud.setPrioridad("ALTA");
+
+        when(repositorio.findById("sol-001"))
+            .thenReturn(Optional.of(solicitud));
+
+        when(repositorio.save(solicitud))
+            .thenReturn(solicitud);
+
+        var resultado = servicio.actualizarEstadoDeTecnico(
+            "sol-001",
+            "tecnico.prueba@example.com",
+            "en_proceso"
+        );
+
+        assertTrue(resultado.isPresent());
+        assertEquals("EN_PROCESO", resultado.get().getEstado());
+        assertEquals("ALTA", resultado.get().getPrioridad());
+
+        verify(repositorio).save(solicitud);
+    }
+
+    @Test
+    void noDebeModificarSolicitudDeOtroTecnico() {
+
+        SolicitudRepository repositorio =
+            mock(SolicitudRepository.class);
+
+        SolicitudService servicio = new SolicitudService(repositorio);
+
+        Solicitud solicitud = new Solicitud();
+        solicitud.setTecnicoCorreo("otro.tecnico@example.com");
+
+        when(repositorio.findById("sol-002"))
+            .thenReturn(Optional.of(solicitud));
+
+        var resultado = servicio.actualizarEstadoDeTecnico(
+            "sol-002",
+            "tecnico.prueba@example.com",
+            "EN_PROCESO"
+        );
+
+        assertTrue(resultado.isEmpty());
+
+        verify(repositorio, never())
+            .save(any(Solicitud.class));
+    }
+
+    @Test
+    void debeRechazarEstadoInvalido() {
+
+        SolicitudRepository repositorio =
+            mock(SolicitudRepository.class);
+
+        SolicitudService servicio = new SolicitudService(repositorio);
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> servicio.actualizarEstadoDeTecnico(
+                "sol-001",
+                "tecnico.prueba@example.com",
+                "ELIMINADA"
+            )
+        );
+
+        verifyNoInteractions(repositorio);
+    }
+
+    @Test
+    void noDebeActualizarSolicitudInexistenteDeTecnico() {
+
+        SolicitudRepository repositorio =
+            mock(SolicitudRepository.class);
+
+        SolicitudService servicio = new SolicitudService(repositorio);
+
+        when(repositorio.findById("no-existe"))
+            .thenReturn(Optional.empty());
+
+        var resultado = servicio.actualizarEstadoDeTecnico(
+            "no-existe",
+            "tecnico.prueba@example.com",
+            "EN_PROCESO"
+        );
+
+        assertTrue(resultado.isEmpty());
+
+        verify(repositorio, never())
+            .save(any(Solicitud.class));
+    }
 }

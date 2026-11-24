@@ -76,6 +76,12 @@ public class ApiSecurityConfig {
                         "/api/solicitudes/mis/**"
                     ).hasRole("CLIENTE")
 
+                    // Operaciones exclusivas del tecnico
+                    .requestMatchers(
+                        "/api/solicitudes/tecnico",
+                        "/api/solicitudes/tecnico/**"
+                    ).hasRole("TECNICO")
+
                     // TEMPORAL: Conservar el CRUD existente
                     .requestMatchers(
                         "/api/solicitudes",

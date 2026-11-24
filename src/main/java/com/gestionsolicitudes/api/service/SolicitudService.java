@@ -265,4 +265,52 @@ public class SolicitudService {
             });
     }
 
+    // Actualizar el estado de una solicitud asignada al tecnico
+    public Optional<Solicitud> actualizarEstadoDeTecnico(
+            String identificadorSolicitud,
+            String correoTecnico,
+            String estadoNuevo) {
+
+        if (identificadorSolicitud == null ||
+                identificadorSolicitud.isBlank() ||
+                correoTecnico == null ||
+                correoTecnico.isBlank() ||
+                estadoNuevo == null ||
+                estadoNuevo.isBlank()) {
+
+            throw new IllegalArgumentException(
+                "Los datos de actualizacion son obligatorios"
+            );
+        }
+
+        String estadoNormalizado = estadoNuevo
+            .trim()
+            .toUpperCase(Locale.ROOT);
+
+        if (!List.of("EN_PROCESO", "RESUELTA")
+                .contains(estadoNormalizado)) {
+
+            throw new IllegalArgumentException(
+                "El estado debe ser EN_PROCESO o RESUELTA"
+            );
+        }
+
+        String correoNormalizado = correoTecnico
+            .trim()
+            .toLowerCase(Locale.ROOT);
+
+        return repository.findById(identificadorSolicitud)
+            .filter(solicitud ->
+                solicitud.getTecnicoCorreo() != null &&
+                correoNormalizado.equals(
+                    solicitud.getTecnicoCorreo()
+                        .trim()
+                        .toLowerCase(Locale.ROOT)
+                )
+            )
+            .map(solicitud -> {
+                solicitud.setEstado(estadoNormalizado);
+                return repository.save(solicitud);
+            });
+    }
 }
