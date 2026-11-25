@@ -120,78 +120,120 @@ public class SolicitudService {
         return repository.findByClienteCorreo(correoNormalizado);
     }
 
-    //Crear una solicitud asociada al cliente autenticado
+    // Mantener compatibilidad con las llamadas anteriores
     public Solicitud crearParaCliente(
-        String correo,
-        String titulo,
-        String descripcion){
-            if(correo == null || correo.isBlank() || titulo == null || titulo.isBlank()
-                || descripcion == null || descripcion.isBlank()){
-                throw new IllegalArgumentException(
-                "Los datos de la solicitud son obligatorios"
-                );
-            }
-
-            Solicitud solicitud = new Solicitud();
-
-            solicitud.setTitulo(titulo.trim());
-            solicitud.setDescripcion(descripcion.trim());
-
-            //Valores iniciales controlados por el servidor
-            solicitud.setEstado("PENDIENTE");
-            solicitud.setPrioridad("MEDIA");
-
-            //Propietario identificado mediante JWT
-            solicitud.setClienteCorreo(correo.trim().toLowerCase(java.util.Locale.ROOT));
-
-            //El tecnico se asignara posteriormente
-            solicitud.setTecnicoCorreo(null);
-
-            return repository.save(solicitud);
-    }
-    
-    
-    public Optional<Solicitud> actualizarContenidoDeCliente(
-            String id,
-            String clienteCorreo,
+            String correo,
             String titulo,
             String descripcion) {
 
-        if (id == null || id.isBlank() || clienteCorreo == null || clienteCorreo.isBlank()
-                || titulo == null || titulo.isBlank() || descripcion == null || descripcion.isBlank()) {
+        return crearParaCliente(correo, titulo, descripcion, null);
+    }
 
-            throw new IllegalArgumentException("Los datos de actualizacion son obligatorios");
+    // Crear una solicitud con categoria
+    public Solicitud crearParaCliente(
+            String correo,
+            String titulo,
+            String descripcion,
+            String categoria) {
+
+        if (correo == null || correo.isBlank() ||
+                titulo == null || titulo.isBlank() ||
+                descripcion == null || descripcion.isBlank()) {
+
+            throw new IllegalArgumentException(
+                "Los datos de la solicitud son obligatorios"
+            );
         }
 
-        String correoNormalizado = clienteCorreo
-            .trim()
-            .toLowerCase(Locale.ROOT);
+        String categoriaValidada = validarCategoria(categoria);
 
-        // Buscar la solicitud
-        Optional<Solicitud> encontrada = repository.findById(id);
+        Solicitud solicitud = new Solicitud();
 
-        if (encontrada.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Solicitud solicitud = encontrada.get();
-
-        // Comprobar su propietario
-        if (solicitud.getClienteCorreo() == null
-                || !correoNormalizado.equals(
-                    solicitud.getClienteCorreo()
-                        .trim()
-                        .toLowerCase(Locale.ROOT))) {
-
-            return Optional.empty();
-        }
-
-        // Modificar solamente campos permitidos
         solicitud.setTitulo(titulo.trim());
         solicitud.setDescripcion(descripcion.trim());
+        solicitud.setCategoria(categoriaValidada);
 
-        return Optional.of(repository.save(solicitud));
+        // Valores iniciales controlados por el servidor
+        solicitud.setEstado("PENDIENTE");
+        solicitud.setPrioridad("MEDIA");
+
+        // Propietario identificado por JWT
+        solicitud.setClienteCorreo(
+            correo.trim().toLowerCase(Locale.ROOT)
+        );
+
+        solicitud.setTecnicoCorreo(null);
+
+        return repository.save(solicitud);
     }
+    
+    
+    
+// Mantener compatibilidad con las llamadas anteriores
+public Optional<Solicitud> actualizarContenidoDeCliente(
+        String id,
+        String clienteCorreo,
+        String titulo,
+        String descripcion) {
+
+    return actualizarContenidoDeCliente(
+        id, clienteCorreo, titulo, descripcion, null
+    );
+}
+
+// Actualizar titulo, descripcion y categoria del cliente
+public Optional<Solicitud> actualizarContenidoDeCliente(
+        String id,
+        String clienteCorreo,
+        String titulo,
+        String descripcion,
+        String categoria) {
+
+    if (id == null || id.isBlank() ||
+            clienteCorreo == null || clienteCorreo.isBlank() ||
+            titulo == null || titulo.isBlank() ||
+            descripcion == null || descripcion.isBlank()) {
+
+        throw new IllegalArgumentException(
+            "Los datos de actualizacion son obligatorios"
+        );
+    }
+
+    String categoriaValidada = validarCategoria(categoria);
+
+    String correoNormalizado = clienteCorreo
+        .trim()
+        .toLowerCase(Locale.ROOT);
+
+    Optional<Solicitud> encontrada = repository.findById(id);
+
+    if (encontrada.isEmpty()) {
+        return Optional.empty();
+    }
+
+    Solicitud solicitud = encontrada.get();
+
+    // Impedir modificar solicitudes ajenas
+    if (solicitud.getClienteCorreo() == null ||
+            !correoNormalizado.equals(
+                solicitud.getClienteCorreo()
+                    .trim()
+                    .toLowerCase(Locale.ROOT))) {
+
+        return Optional.empty();
+    }
+
+    solicitud.setTitulo(titulo.trim());
+    solicitud.setDescripcion(descripcion.trim());
+
+    // Si el cliente no envio categoria, conservar la actual
+    if (categoriaValidada != null) {
+        solicitud.setCategoria(categoriaValidada);
+    }
+
+    return Optional.of(repository.save(solicitud));
+}
+
 
     public boolean eliminarDeCliente(
             String id,
@@ -312,5 +354,25 @@ public class SolicitudService {
                 solicitud.setEstado(estadoNormalizado);
                 return repository.save(solicitud);
             });
+    }
+
+    // Validar las categorias admitidas
+    private String validarCategoria(String categoria) {
+
+        if (categoria == null) {
+            return null;
+        }
+
+        String categoriaNormalizada = categoria.trim();
+
+        if (!List.of("Hardware", "Software", "Redes")
+                .contains(categoriaNormalizada)) {
+
+            throw new IllegalArgumentException(
+                "La categoria debe ser Hardware, Software o Redes"
+            );
+        }
+
+        return categoriaNormalizada;
     }
 }

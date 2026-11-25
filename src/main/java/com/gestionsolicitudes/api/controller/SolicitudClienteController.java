@@ -55,7 +55,8 @@ public class SolicitudClienteController {
         Solicitud guardada = solicitudService.crearParaCliente(
             cliente.getCorreo(),
             request.titulo(),
-            request.descripcion()
+            request.descripcion(),
+            request.categoria()
         );
 
         return ResponseEntity
@@ -98,7 +99,8 @@ public class SolicitudClienteController {
             id,
             cliente.getCorreo(),
             request.titulo(),
-            request.descripcion()
+            request.descripcion(),
+            request.categoria()
         );
 
         if (resultado.isEmpty()) {
