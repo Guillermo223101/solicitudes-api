@@ -2,6 +2,7 @@ package com.gestionsolicitudes.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 public record ActualizarSolicitudRequest(
 
@@ -11,6 +12,11 @@ public record ActualizarSolicitudRequest(
 
     @NotBlank(message = "La descripcion es obligatoria")
     @Size(max = 1000)
-    String descripcion
+    String descripcion,
 
+    @Pattern(
+        regexp = "Hardware|Software|Redes",
+        message = "La categoria debe ser Hardware, Software o Redes"
+    )
+    String categoria
 ) {}

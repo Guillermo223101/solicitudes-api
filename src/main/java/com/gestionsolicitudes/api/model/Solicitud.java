@@ -12,10 +12,12 @@ public class Solicitud {
 
     private String titulo;
     private String descripcion;
+    private String categoria;
     private String estado;
     private String prioridad;
     private String clienteCorreo;
     private String tecnicoCorreo;
+    private String evidenciaBase64;
 
     public Solicitud() {
     }
@@ -76,4 +78,19 @@ public class Solicitud {
         this.tecnicoCorreo = tecnicoCorreo;
     }
 
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(String categoria) {
+        this.categoria = categoria;
+    }
+
+    public String getEvidenciaBase64() {
+        return evidenciaBase64;
+    }
+
+    public void setEvidenciaBase64(String evidenciaBase64) {
+        this.evidenciaBase64 = evidenciaBase64;
+    }
 }
