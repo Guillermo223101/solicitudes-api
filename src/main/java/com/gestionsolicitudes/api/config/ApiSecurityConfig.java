@@ -82,11 +82,11 @@ public class ApiSecurityConfig {
                         "/api/solicitudes/tecnico/**"
                     ).hasRole("TECNICO")
 
-                    // TEMPORAL: Conservar el CRUD existente
+                    // Bloquear rutas anituguas
                     .requestMatchers(
                         "/api/solicitudes",
                         "/api/solicitudes/**"
-                    ).permitAll()
+                    ).denyAll()
 
                     //Bloquear rutas no contempladas
                     .anyRequest().denyAll()
