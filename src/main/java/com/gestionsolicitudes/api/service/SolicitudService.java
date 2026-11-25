@@ -9,22 +9,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Locale;
 
-@Service 
+@Service
 public class SolicitudService {
     private final SolicitudRepository repository;
 
-    //Constructor
-    public SolicitudService(SolicitudRepository repository){
+    // Constructor
+    public SolicitudService(SolicitudRepository repository) {
         this.repository = repository;
     }
 
-    //Obtener todas las solicitudes
-    public List<Solicitud> listarSolicitudes(){
+    // Obtener todas las solicitudes
+    public List<Solicitud> listarSolicitudes() {
         return repository.findAll();
     }
 
-    //Buscar una solicitud por ID
-    public Optional<Solicitud> buscarPorId(String id){
+    // Buscar una solicitud por ID
+    public Optional<Solicitud> buscarPorId(String id) {
         return repository.findById(id);
     }
 
@@ -61,7 +61,6 @@ public class SolicitudService {
         return true;
     }
 
-
     // Asignar un tecnico a una solicitud
     public Optional<Solicitud> asignarTecnico(
             String id, String tecnicoCorreo) {
@@ -87,7 +86,6 @@ public class SolicitudService {
             });
     }
 
-
     // Obtener solicitudes asignadas a un tecnico
     public List<Solicitud> listarAsignadasATecnico(
             String tecnicoCorreo) {
@@ -107,9 +105,9 @@ public class SolicitudService {
         );
     }
 
-    //Consultar solicitudes de un cliente
-    public List<Solicitud> listarPorClienteCorreo(String clienteCorreo){
-        if(clienteCorreo == null || clienteCorreo.isBlank()){
+    // Consultar solicitudes de un cliente
+    public List<Solicitud> listarPorClienteCorreo(String clienteCorreo) {
+        if (clienteCorreo == null || clienteCorreo.isBlank()) {
             throw new IllegalArgumentException("El correo del cliente es obligatorio");
         }
 
@@ -120,37 +118,53 @@ public class SolicitudService {
         return repository.findByClienteCorreo(correoNormalizado);
     }
 
-    //Crear una solicitud asociada al cliente autenticado
+    // Sobrecarga de compatibilidad para los tests existentes
     public Solicitud crearParaCliente(
-        String correo,
-        String titulo,
-        String descripcion){
-            if(correo == null || correo.isBlank() || titulo == null || titulo.isBlank()
-                || descripcion == null || descripcion.isBlank()){
-                throw new IllegalArgumentException(
-                "Los datos de la solicitud son obligatorios"
-                );
-            }
-
-            Solicitud solicitud = new Solicitud();
-
-            solicitud.setTitulo(titulo.trim());
-            solicitud.setDescripcion(descripcion.trim());
-
-            //Valores iniciales controlados por el servidor
-            solicitud.setEstado("PENDIENTE");
-            solicitud.setPrioridad("MEDIA");
-
-            //Propietario identificado mediante JWT
-            solicitud.setClienteCorreo(correo.trim().toLowerCase(java.util.Locale.ROOT));
-
-            //El tecnico se asignara posteriormente
-            solicitud.setTecnicoCorreo(null);
-
-            return repository.save(solicitud);
+            String correo,
+            String titulo,
+            String descripcion) {
+        return crearParaCliente(correo, titulo, descripcion, null);
     }
-    
-    
+
+    // Crear una solicitud asociada al cliente autenticado (con evidencia opcional)
+    public Solicitud crearParaCliente(
+            String correo,
+            String titulo,
+            String descripcion,
+            String evidenciaBase64) {
+
+        if (correo == null || correo.isBlank() || titulo == null || titulo.isBlank()
+                || descripcion == null || descripcion.isBlank()) {
+            throw new IllegalArgumentException(
+                "Los datos de la solicitud son obligatorios"
+            );
+        }
+
+        Solicitud solicitud = new Solicitud();
+
+        solicitud.setTitulo(titulo.trim());
+        solicitud.setDescripcion(descripcion.trim());
+
+        // Guardar evidencia en Base64 si fue enviada
+        if (evidenciaBase64 != null && !evidenciaBase64.isBlank()) {
+            solicitud.setEvidenciaBase64(evidenciaBase64.trim());
+        } else {
+            solicitud.setEvidenciaBase64(null);
+        }
+
+        // Valores iniciales controlados por el servidor
+        solicitud.setEstado("PENDIENTE");
+        solicitud.setPrioridad("MEDIA");
+
+        // Propietario identificado mediante JWT
+        solicitud.setClienteCorreo(correo.trim().toLowerCase(Locale.ROOT));
+
+        // El tecnico se asignara posteriormente
+        solicitud.setTecnicoCorreo(null);
+
+        return repository.save(solicitud);
+    }
+
     public Optional<Solicitud> actualizarContenidoDeCliente(
             String id,
             String clienteCorreo,

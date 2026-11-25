@@ -3,11 +3,10 @@ package com.gestionsolicitudes.api.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-
 @Document(collection = "solicitudes")
 public class Solicitud {
 
-    @Id 
+    @Id
     private String id;
 
     private String titulo;
@@ -16,6 +15,7 @@ public class Solicitud {
     private String prioridad;
     private String clienteCorreo;
     private String tecnicoCorreo;
+    private String evidenciaBase64;
 
     public Solicitud() {
     }
@@ -32,7 +32,7 @@ public class Solicitud {
         return titulo;
     }
 
-    public void setTitulo(String titulo){
+    public void setTitulo(String titulo) {
         this.titulo = titulo;
     }
 
@@ -40,7 +40,7 @@ public class Solicitud {
         return descripcion;
     }
 
-    public void setDescripcion(String descripcion){
+    public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
 
@@ -48,7 +48,7 @@ public class Solicitud {
         return estado;
     }
 
-    public void setEstado(String estado){
+    public void setEstado(String estado) {
         this.estado = estado;
     }
 
@@ -56,7 +56,7 @@ public class Solicitud {
         return prioridad;
     }
 
-    public void setPrioridad(String prioridad){
+    public void setPrioridad(String prioridad) {
         this.prioridad = prioridad;
     }
 
@@ -74,6 +74,14 @@ public class Solicitud {
 
     public void setTecnicoCorreo(String tecnicoCorreo) {
         this.tecnicoCorreo = tecnicoCorreo;
+    }
+
+    public String getEvidenciaBase64() {
+        return evidenciaBase64;
+    }
+
+    public void setEvidenciaBase64(String evidenciaBase64) {
+        this.evidenciaBase64 = evidenciaBase64;
     }
 
 }

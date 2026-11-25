@@ -33,7 +33,7 @@ public class SolicitudClienteController {
             this.usuarioRepository = usuarioRepository;
     }
 
-    //Consultar solicitudes propias
+    // Consultar solicitudes propias
     @GetMapping("/mis")
     public List<Solicitud> misSolicitudes(@AuthenticationPrincipal Jwt jwt) {
 
@@ -43,7 +43,7 @@ public class SolicitudClienteController {
             cliente.getCorreo()
         );
     }
-    
+
     // Crear una solicitud propia
     @PostMapping("/mis")
     public ResponseEntity<Solicitud> crearSolicitud(
@@ -55,7 +55,8 @@ public class SolicitudClienteController {
         Solicitud guardada = solicitudService.crearParaCliente(
             cliente.getCorreo(),
             request.titulo(),
-            request.descripcion()
+            request.descripcion(),
+            request.evidenciaBase64()
         );
 
         return ResponseEntity
