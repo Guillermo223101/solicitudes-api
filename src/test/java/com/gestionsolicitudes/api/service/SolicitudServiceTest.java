@@ -500,4 +500,53 @@ class SolicitudServiceTest {
         verify(repositorio, never())
             .save(any(Solicitud.class));
     }
+
+    @Test
+    void debeRechazarEvidenciaBase64Invalida() {
+
+        SolicitudRepository repositorio =
+            mock(SolicitudRepository.class);
+
+        SolicitudService servicio =
+            new SolicitudService(repositorio);
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> servicio.crearParaCliente(
+                "cliente.api@example.com",
+                "Prueba de fotografia",
+                "Evidencia incorrecta",
+                "Hardware",
+                "esto-no-es-base64!"
+            )
+        );
+
+        verifyNoInteractions(repositorio);
+    }
+
+    @Test
+    void debeCrearSolicitudSinFotografia() {
+
+        SolicitudRepository repositorio =
+            mock(SolicitudRepository.class);
+
+        SolicitudService servicio =
+            new SolicitudService(repositorio);
+
+        when(repositorio.save(any(Solicitud.class)))
+            .thenAnswer(respuesta -> respuesta.getArgument(0));
+
+        Solicitud resultado = servicio.crearParaCliente(
+            "cliente.api@example.com",
+            "Prueba de categoria",
+            "Solicitud sin fotografia",
+            "Software",
+            null
+        );
+
+        assertEquals("Software", resultado.getCategoria());
+        assertNull(resultado.getEvidenciaBase64());
+
+        verify(repositorio).save(any(Solicitud.class));
+    }
 }

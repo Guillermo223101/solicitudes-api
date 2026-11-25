@@ -56,7 +56,8 @@ public class SolicitudClienteController {
             cliente.getCorreo(),
             request.titulo(),
             request.descripcion(),
-            request.categoria()
+            request.categoria(),
+            request.evidenciaBase64()
         );
 
         return ResponseEntity

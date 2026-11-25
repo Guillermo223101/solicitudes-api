@@ -8,6 +8,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Locale;
+import java.util.Base64;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 @Service 
 public class SolicitudService {
@@ -129,12 +133,25 @@ public class SolicitudService {
         return crearParaCliente(correo, titulo, descripcion, null);
     }
 
-    // Crear una solicitud con categoria
+    // Compatibilidad con creacion sin fotografia
     public Solicitud crearParaCliente(
             String correo,
             String titulo,
             String descripcion,
             String categoria) {
+
+        return crearParaCliente(
+            correo, titulo, descripcion, categoria, null
+        );
+    }
+
+    // Crear una solicitud con categoria y fotografia opc
+    public Solicitud crearParaCliente(
+            String correo,
+            String titulo,
+            String descripcion,
+            String categoria,
+            String evidenciaBase64) {
 
         if (correo == null || correo.isBlank() ||
                 titulo == null || titulo.isBlank() ||
@@ -147,11 +164,14 @@ public class SolicitudService {
 
         String categoriaValidada = validarCategoria(categoria);
 
+        String evidenciaValidada = validarEvidencia(evidenciaBase64);
+
         Solicitud solicitud = new Solicitud();
 
         solicitud.setTitulo(titulo.trim());
         solicitud.setDescripcion(descripcion.trim());
         solicitud.setCategoria(categoriaValidada);
+        solicitud.setEvidenciaBase64(evidenciaValidada);
 
         // Valores iniciales controlados por el servidor
         solicitud.setEstado("PENDIENTE");
@@ -169,70 +189,70 @@ public class SolicitudService {
     
     
     
-// Mantener compatibilidad con las llamadas anteriores
-public Optional<Solicitud> actualizarContenidoDeCliente(
-        String id,
-        String clienteCorreo,
-        String titulo,
-        String descripcion) {
+    // Mantener compatibilidad con las llamadas anteriores
+    public Optional<Solicitud> actualizarContenidoDeCliente(
+            String id,
+            String clienteCorreo,
+            String titulo,
+            String descripcion) {
 
-    return actualizarContenidoDeCliente(
-        id, clienteCorreo, titulo, descripcion, null
-    );
-}
-
-// Actualizar titulo, descripcion y categoria del cliente
-public Optional<Solicitud> actualizarContenidoDeCliente(
-        String id,
-        String clienteCorreo,
-        String titulo,
-        String descripcion,
-        String categoria) {
-
-    if (id == null || id.isBlank() ||
-            clienteCorreo == null || clienteCorreo.isBlank() ||
-            titulo == null || titulo.isBlank() ||
-            descripcion == null || descripcion.isBlank()) {
-
-        throw new IllegalArgumentException(
-            "Los datos de actualizacion son obligatorios"
+        return actualizarContenidoDeCliente(
+            id, clienteCorreo, titulo, descripcion, null
         );
     }
 
-    String categoriaValidada = validarCategoria(categoria);
+    // Actualizar titulo, descripcion y categoria del cliente
+    public Optional<Solicitud> actualizarContenidoDeCliente(
+            String id,
+            String clienteCorreo,
+            String titulo,
+            String descripcion,
+            String categoria) {
 
-    String correoNormalizado = clienteCorreo
-        .trim()
-        .toLowerCase(Locale.ROOT);
+        if (id == null || id.isBlank() ||
+                clienteCorreo == null || clienteCorreo.isBlank() ||
+                titulo == null || titulo.isBlank() ||
+                descripcion == null || descripcion.isBlank()) {
 
-    Optional<Solicitud> encontrada = repository.findById(id);
+            throw new IllegalArgumentException(
+                "Los datos de actualizacion son obligatorios"
+            );
+        }
 
-    if (encontrada.isEmpty()) {
-        return Optional.empty();
+        String categoriaValidada = validarCategoria(categoria);
+
+        String correoNormalizado = clienteCorreo
+            .trim()
+            .toLowerCase(Locale.ROOT);
+
+        Optional<Solicitud> encontrada = repository.findById(id);
+
+        if (encontrada.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Solicitud solicitud = encontrada.get();
+
+        // Impedir modificar solicitudes ajenas
+        if (solicitud.getClienteCorreo() == null ||
+                !correoNormalizado.equals(
+                    solicitud.getClienteCorreo()
+                        .trim()
+                        .toLowerCase(Locale.ROOT))) {
+
+            return Optional.empty();
+        }
+
+        solicitud.setTitulo(titulo.trim());
+        solicitud.setDescripcion(descripcion.trim());
+
+        // Si el cliente no envio categoria, conservar la actual
+        if (categoriaValidada != null) {
+            solicitud.setCategoria(categoriaValidada);
+        }
+
+        return Optional.of(repository.save(solicitud));
     }
-
-    Solicitud solicitud = encontrada.get();
-
-    // Impedir modificar solicitudes ajenas
-    if (solicitud.getClienteCorreo() == null ||
-            !correoNormalizado.equals(
-                solicitud.getClienteCorreo()
-                    .trim()
-                    .toLowerCase(Locale.ROOT))) {
-
-        return Optional.empty();
-    }
-
-    solicitud.setTitulo(titulo.trim());
-    solicitud.setDescripcion(descripcion.trim());
-
-    // Si el cliente no envio categoria, conservar la actual
-    if (categoriaValidada != null) {
-        solicitud.setCategoria(categoriaValidada);
-    }
-
-    return Optional.of(repository.save(solicitud));
-}
 
 
     public boolean eliminarDeCliente(
@@ -374,5 +394,83 @@ public Optional<Solicitud> actualizarContenidoDeCliente(
         }
 
         return categoriaNormalizada;
+    }
+
+    private String validarEvidencia(String evidenciaBase64) {
+
+        if (evidenciaBase64 == null || evidenciaBase64.isBlank()) {
+            return null;
+        }
+
+        String textoBase64 = evidenciaBase64.trim();
+
+        if (textoBase64.length() > 1_400_000) {
+            throw new IllegalArgumentException(
+                "La fotografia supera el limite permitido"
+            );
+        }
+
+        byte[] imagenDecodificada;
+
+        try {
+            imagenDecodificada = Base64.getDecoder().decode(textoBase64);
+        } catch (IllegalArgumentException error) {
+            throw new IllegalArgumentException(
+                "La fotografia no tiene un formato Base64 valido"
+            );
+        }
+
+        if (imagenDecodificada.length == 0 ||
+                imagenDecodificada.length > 1_048_576) {
+            throw new IllegalArgumentException(
+                "La fotografia debe ocupar como maximo 1 MB"
+            );
+        }
+
+        boolean esJpeg =
+            imagenDecodificada.length >= 3 &&
+            (imagenDecodificada[0] & 0xFF) == 0xFF &&
+            (imagenDecodificada[1] & 0xFF) == 0xD8 &&
+            (imagenDecodificada[2] & 0xFF) == 0xFF;
+
+        byte[] firmaPng = {
+            (byte) 137, 80, 78, 71, 13, 10, 26, 10
+        };
+
+        boolean esPng =
+            imagenDecodificada.length >= firmaPng.length;
+
+        if (esPng) {
+            for (int indice = 0; indice < firmaPng.length; indice++) {
+                if (imagenDecodificada[indice] != firmaPng[indice]) {
+                    esPng = false;
+                    break;
+                }
+            }
+        }
+
+        if (!esJpeg && !esPng) {
+            throw new IllegalArgumentException(
+                "Solo se permiten fotografias JPEG o PNG"
+            );
+        }
+
+        try {
+            var imagen = ImageIO.read(
+                new ByteArrayInputStream(imagenDecodificada)
+            );
+
+            if (imagen == null) {
+                throw new IllegalArgumentException(
+                    "No se pudo interpretar la fotografia"
+                );
+            }
+        } catch (IOException error) {
+            throw new IllegalArgumentException(
+                "La fotografia esta danada o no es valida"
+            );
+        }
+
+        return textoBase64;
     }
 }
